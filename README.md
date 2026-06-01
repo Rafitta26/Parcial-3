@@ -150,4 +150,38 @@ Flujos Alternativos,"A1: Si el motor está en PAUSA o MENU, el movimiento se ign
 Postcondiciones,Las coordenadas del jugador quedan alteradas para el procesamiento del siguiente ciclo de colisiones.
 Reglas de Negocio,El desplazamiento se realiza casilla a casilla (valores enteros discretos) para respetar el entorno en cuadrícula.
 
+
+
+7. Bitácora del Uso de Inteligencia Artificial
+
+🛠️ Herramienta y Rol
+IA: Gemini (Modelo de Lenguaje).
+
+Rol: Co-piloto de desarrollo y arquitecto de software.
+
+💬 Muestra de Prompts Exactos
+Estructura Base (feature/motor-core):
+
+"Actúa como un Ingeniero de Software Java. Diseña la lógica interna de un motor 2D en cuadrícula (temática RPG medieval) con un máximo de 6 clases. Incluye Main, MotorJuego con un Enum de estados (Menu, Jugando, Pausa, Game Over), y una clase abstracta EntidadVideojuego con coordenadas (x,y,w,h) de la que hereden Jugador y Enemigo. Aplica encapsulación."
+
+Funcionalidades Avanzadas (feature/avanzadas):
+
+"Añade al código anterior: 1) Un método matemático de colisiones AABB basado en (x,y,w,h) dentro de las entidades. 2) Una IA para el Enemigo que calcule la distancia Manhattan al jugador y cambie entre PATRULLAR, PERSEGUIR y ATACAR. Añade logs explicativos por consola."
+
+⚠️ Control de Errores de la IA
+El Error: La IA sufrió de sobre-ingeniería e implementó el patrón State Pattern completo para los estados, desglosando cada uno en clases independientes. Esto elevó el total a 9 clases, violando la restricción del examen (Máx. 6 clases).
+
+Solución: Le ordené rectificar mediante un contra-prompt: "Detén eso. Crear clases para cada estado viola el límite del examen. Simplifícalo usando un Enum global para el juego y un String con condicionales para la IA del enemigo". El modelo corrigió y redujo el diseño a 5 clases.
+
+🧠 Reflexión Crítica
+Ventajas: Acelera drásticamente la escritura de código repetitivo (boilerplate) como getters/setters, constructores y fórmulas matemáticas estándar (colisión AABB y distancia Manhattan).
+
+Peligros: Tiende a proponer soluciones excesivamente complejas (alucinación de arquitectura) que rompen las restricciones del enunciado. El desarrollador debe mantener siempre el control crítico del código y verificar los logs.
+
+
+
+
+
+
+
     
