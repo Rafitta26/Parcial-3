@@ -1,0 +1,37 @@
+1. tipo: descripción corta del cambio en minúsculas
+
+Primer avance (Creación de clases base y enum):
+git add src/com/motorjuego/EstadoJuego.java src/com/motorjuego/EntidadVideojuego.java
+git commit -m "feat: add game states enum and base abstract entity class"
+
+Segundo avance (Estructura del Motor y herencia):
+git add src/com/motorjuego/MotorJuego.java src/com/motorjuego/EntidadesEspecificas.java
+git commit -m "feat: implement game loop core structure and player inheritance"
+
+Tercer avance (Simulación de Inputs táctiles solicitados):
+git add src/com/motorjuego/Main.java
+git commit -m "feat: add simulated touch inputs and console logging system"
+
+2. En la rama feature/avanzadas
+
+Primer avance (Detector de colisiones):
+git add src/com/motorjuego/MotorJuego.java
+git commit -m "feat: add axis-aligned bounding box collision detection logic"
+
+Segundo avance (Comportamiento NPC e Inteligencia Artificial):
+git add src/com/motorjuego/EntidadesEspecificas.java
+git commit -m "feat: implement reactive state machine for npc enemy behavior"
+
+Opcional (Si cometes un error de sintaxis y lo arreglas):
+git add src/com/motorjuego/MotorJuego.java
+git commit -m "fix: correct null pointer exception on collision check"
+
+3. En la rama feature/documentacion
+
+Primer avance (Diagramas UML):
+git add README.md
+git commit -m "docs: include class and use case diagrams in mermaid format"
+
+Segundo avance (Tablas de Casos de Uso y Bitácora IA):
+git add README.md
+git commit -m "docs: complete use case specifications and AI prompt log"
