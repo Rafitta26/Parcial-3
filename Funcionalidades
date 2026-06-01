@@ -15,6 +15,7 @@ public class MotorJuego {
         this.entidades = new ArrayList<>();
     }
 
+    // --- REQUISITO: Control de Estado del Juego ---
     public void iniciarPartida() {
         if (this.estadoActual == EstadoJuego.JUGANDO) {
             System.out.println("LOG [ESTADO]: Ya hay una partida en curso.");
@@ -23,6 +24,7 @@ public class MotorJuego {
         this.estadoActual = EstadoJuego.JUGANDO;
         this.entidades.clear();
         
+        // Inicializamos al jugador de forma fija
         this.jugador = new Jugador("Héroe Medieval", 2, 2);
         this.entidades.add(jugador);
         
@@ -44,6 +46,7 @@ public class MotorJuego {
         System.out.println("LOG [ESTADO]: Evento Forzado: ¡GAME OVER! Fin de la simulación.");
     }
 
+    // --- REQUISITO: Gestión de Entidades Básica ---
     public void agregarEntidad(EntidadVideojuego entidad) {
         this.entidades.add(entidad);
         System.out.println("LOG [ENTIDADES]: Nueva entidad spawneda -> " + entidad.getNombre() + " en (" + entidad.getX() + "," + entidad.getY() + ")");
@@ -55,12 +58,14 @@ public class MotorJuego {
         }
     }
 
+    // --- REQUISITO: Simulación de Inputs Táctiles ---
     public void desplazarEntidad(String direccion) {
         if (this.estadoActual != EstadoJuego.JUGANDO) {
             System.out.println("LOG [INPUT]: Movimiento ignorado. El juego no está activo.");
             return;
         }
         
+        // Modificación de coordenadas simulando un D-Pad táctil
         switch (direccion.toUpperCase()) {
             case "ARRIBA":    jugador.setY(jugador.getY() - 1); break;
             case "ABAJO":     jugador.setY(jugador.getY() + 1); break;
@@ -81,6 +86,7 @@ public class MotorJuego {
         System.out.println("LOG [INPUT]: ¡Botón de ACCIÓN pulsado en pantalla! (El jugador blande su espada).");
     }
 
+    // --- REQUISITO: Simulación del Bucle (Game Loop) ---
     public void actualizar() {
         if (this.estadoActual != EstadoJuego.JUGANDO) {
             System.out.println("LOG [LOOP]: Ciclo omitido. El motor está en estado: " + estadoActual);
@@ -89,21 +95,23 @@ public class MotorJuego {
 
         System.out.println("\n--- [TOCK DEL GAME LOOP] Actualizando Entidades ---");
         
+        // Creamos una copia temporal para evitar errores de ConcurrentModificationException si una entidad se elimina en este bucle
         List<EntidadVideojuego> copiaEntidades = new ArrayList<>(this.entidades);
         
         for (EntidadVideojuego entidad : copiaEntidades) {
             entidad.actualizar(this.jugador);
         }
         
+        // Verificación automatizada de salud del jugador en el loop
         if (this.jugador.getVida() <= 0) {
             forzarGameOver();
         }
     }
 
+    // Getters indispensables
     public EstadoJuego getEstadoActual() { return estadoActual; }
     public List<EntidadVideojuego> getEntidades() { return entidades; }
 }
-
 2. Modificación de Main.java
 
 package com.motorjuego;
