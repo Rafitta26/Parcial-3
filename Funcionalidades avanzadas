@@ -1,0 +1,195 @@
+1. Actualización de EntidadesEspecificas.java
+
+package com.motorjuego;
+
+// --- CLASE JUGADOR ---
+class Jugador extends EntidadVideojuego {
+    public Jugador(String nombre, int x, int y) {
+        super(nombre, x, y, 1, 1, 100, "sprite_caballero.png");
+    }
+
+    @Override
+    public void actualizar(EntidadVideojuego jugador) {
+        // El jugador se mueve por inputs, no requiere auto-actualización
+    }
+}
+
+// --- CLASE ENEMIGO ---
+class Enemigo extends EntidadVideojuego {
+    private String estadoIA; // PATRULLAR, PERSEGUIR, ATACAR
+    
+    // Distancias límite para la toma de decisiones de la IA
+    private static final int DISTANCIA_PERSEGUIR = 5;
+    private static final int DISTANCIA_ATACAR = 1; 
+
+    public Enemigo(String nombre, int x, int y) {
+        super(nombre, x, y, 1, 1, 40, "sprite_orco.png");
+        this.estadoIA = "PATRULLAR";
+    }
+
+    // REQUISITO AVANZADO: Comportamiento básico NPC del Enemigo
+    @Override
+    public void actualizar(EntidadVideojuego jugador) {
+        if (jugador == null || jugador.getVida() <= 0) return;
+
+        // Calculamos la distancia Manhattan: |x1 - x2| + |y1 - y2|
+        int distancia = Math.abs(this.getX() - jugador.getX()) + Math.abs(this.getY() - jugador.getY());
+
+        // Transición de estados de la IA basada en la distancia
+        if (distancia <= DISTANCIA_ATACAR) {
+            this.estadoIA = "ATACAR";
+            System.out.println("LOG [IA ENEMIGO]: [" + getNombre() + "] cambia a estado ¡ATACAR! Lanzando golpe.");
+        } else if (distancia <= DISTANCIA_PERSEGUIR) {
+            this.estadoIA = "PERSEGUIR";
+            System.out.println("LOG [IA ENEMIGO]: [" + getNombre() + "] cambia a estado PERSEGUIR. Avistado el Héroe.");
+            
+            // Persecución inteligente en cuadrícula (avanza 1 casilla hacia el jugador)
+            if (this.getX() < jugador.getX()) this.setX(this.getX() + 1);
+            else if (this.getX() > jugador.getX()) this.setX(this.getX() - 1);
+            
+            if (this.getY() < jugador.getY()) this.setY(this.getY() + 1);
+            else if (this.getY() > jugador.getY()) this.setY(this.getY() - 1);
+        } else {
+            this.estadoIA = "PATRULLAR";
+            System.out.println("LOG [IA ENEMIGO]: [" + getNombre() + "] en estado PATRULLAR. Zona segura.");
+            this.setX(this.getX() + (int)(Math.random() * 3) - 1);
+        }
+    }
+
+    public String getEstadoIA() { return estadoIA; }
+}
+
+2. Actualización de MotorJuego.java
+
+package com.motorjuego;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class MotorJuego {
+    private EstadoJuego estadoActual;
+    private List<EntidadVideojuego> entidades;
+    private EntidadVideojuego jugador;
+
+    public MotorJuego() {
+        this.estadoActual = EstadoJuego.MENU;
+        this.entidades = new ArrayList<>();
+    }
+
+    public void iniciarPartida() {
+        this.estadoActual = EstadoJuego.JUGANDO;
+        this.entidades.clear();
+        
+        // Spawn original del escenario
+        this.jugador = new Jugador("Héroe Medieval", 0, 0);
+        this.entidades.add(jugador);
+        
+        System.out.println("LOG [MOTOR]: Partida inicializada.");
+    }
+
+    public void agregarEntidad(EntidadVideojuego entidad) {
+        this.entidades.add(entidad);
+        System.out.println("LOG [SPAWN]: " + entidad.getNombre() + " entra al mapa en (" + entidad.getX() + "," + entidad.getY() + ")");
+    }
+
+    public void desplazarJugador(String direccion) {
+        if (this.estadoActual != EstadoJuego.JUGANDO) return;
+        switch (direccion.toUpperCase()) {
+            case "ARRIBA":    jugador.setY(jugador.getY() - 1); break;
+            case "ABAJO":     jugador.setY(jugador.getY() + 1); break;
+            case "IZQUIERDA": jugador.setX(jugador.getX() - 1); break;
+            case "DERECHA":   jugador.setX(jugador.getX() + 1); break;
+        }
+        System.out.println("LOG [INPUT]: Jugador se mueve a (" + jugador.getX() + "," + jugador.getY() + ")");
+    }
+
+    // --- REQUISITO AVANZADO: Detector de Colisiones Simple (AABB) ---
+    private void procesarColisiones() {
+        // Comparamos todas las entidades entre sí
+        for (int i = 0; i < entidades.size(); i++) {
+            for (int j = i + 1; j < entidades.size(); j++) {
+                EntidadVideojuego e1 = entidades.get(i);
+                EntidadVideojuego e2 = entidades.get(j);
+
+                // Verificación matemática (Invocando el método matemático heredado)
+                if (e1.colisionaCon(e2)) {
+                    System.out.println("⚡ LOG [COLISIÓN]: ¡Impacto detectado entre " + e1.getNombre() + " y " + e2.getNombre() + "!");
+                    
+                    // Consecuencias de juego simuladas según los tipos
+                    resolverImpacto(e1, e2);
+                }
+            }
+        }
+    }
+
+    private void resolverImpacto(EntidadVideojuego e1, EntidadVideojuego e2) {
+        // Caso: Jugador choca con Enemigo
+        if ((e1 instanceof Jugador && e2 instanceof Enemigo) || (e2 instanceof Jugador && e1 instanceof Enemigo)) {
+            jugador.recibirDanio(25); // El enemigo hiere al jugador
+            System.out.println("💥 LOG [COMBATE]: El enemigo causa daño. Vida restante del Héroe: " + jugador.getVida() + "%");
+        }
+    }
+
+    // Game Loop
+    public void actualizar() {
+        if (this.estadoActual != EstadoJuego.JUGANDO) return;
+
+        System.out.println("\n--- [TOCK REFRESH] ---");
+        
+        // 1. Actualiza posiciones/comportamientos de IA
+        for (EntidadVideojuego entidad : entidades) {
+            entidad.actualizar(this.jugador);
+        }
+
+        // 2. Ejecuta el detector de colisiones avanzado
+        procesarColisiones();
+
+        // 3. Verificación de derrota
+        if (jugador.getVida() <= 0) {
+            this.estadoActual = EstadoJuego.GAME_OVER;
+            System.out.println("LOG [ESTADO]: El Jugador ha caído en combate. Fin de la partida.");
+        }
+    }
+
+    public EstadoJuego getEstadoActual() { return estadoActual; }
+    public EntidadVideojuego getJugador() { return jugador; }
+}
+
+3. Ejecución Completa en Main.java
+
+package com.motorjuego;
+
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("=========================================================");
+        System.out.println("DEMOSTRACIÓN: FUNCIONALIDADES AVANZADAS (PARTE 4)");
+        System.out.println("=========================================================\n");
+
+        MotorJuego motor = new MotorJuego();
+        motor.iniciarPartida(); // El jugador spawnea en (0,0)
+
+        // Colocamos un Orco a distancia de Patrulla (distancia Manhattan = 6)
+        Enemigo orco = new Enemigo("Orco Berserker", 6, 0);
+        motor.agregarEntidad(orco);
+
+        // --- ESCENARIO 1: Distancia Lejana (Patrullar) ---
+        System.out.println("\n>>> Escenario 1: Enemigo lejos del jugador");
+        motor.actualizar(); 
+
+        // --- ESCENARIO 2: Acercamiento (Perseguir) ---
+        System.out.println("\n>>> Escenario 2: El jugador se aproxima al peligro");
+        motor.desplazarJugador("DERECHA");
+        motor.desplazarJugador("DERECHA"); // Jugador ahora está en (2,0). Distancia = 4.
+        motor.actualizar(); // La IA cambia a PERSEGUIR y da un paso acortando a (5,0)
+
+        // --- ESCENARIO 3: Combate Cuerpo a Cuerpo (Atacar y Colisionar) ---
+        System.out.println("\n>>> Escenario 3: Entrada en rango de ataque y colisión física");
+        motor.desplazarJugador("DERECHA");
+        motor.desplazarJugador("DERECHA"); // Jugador avanza a (4,0). El Orco está en (5,0). Distancia = 1.
+        motor.actualizar(); // El Orco pasa a ATACAR y se mueve a (4,0) compartiendo caja espacial.
+        
+        // Se dispara automáticamente el detector de colisiones en este mismo frame
+        System.out.println("\nEstado final del Motor tras el combate: " + motor.getEstadoActual());
+        System.out.println("=========================================================");
+    }
+}
