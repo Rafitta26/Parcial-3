@@ -1,0 +1,178 @@
+1. Actualización de MotorJuego.java
+
+package com.motorjuego;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class MotorJuego {
+    private EstadoJuego estadoActual;
+    private List<EntidadVideojuego> entidades;
+    private EntidadVideojuego jugador;
+
+    public MotorJuego() {
+        this.estadoActual = EstadoJuego.MENU;
+        this.entidades = new ArrayList<>();
+    }
+
+    public void iniciarPartida() {
+        if (this.estadoActual == EstadoJuego.JUGANDO) {
+            System.out.println("LOG [ESTADO]: Ya hay una partida en curso.");
+            return;
+        }
+        this.estadoActual = EstadoJuego.JUGANDO;
+        this.entidades.clear();
+        
+        this.jugador = new Jugador("Héroe Medieval", 2, 2);
+        this.entidades.add(jugador);
+        
+        System.out.println("LOG [ESTADO]: Partida Iniciada de forma limpia. Estado: " + estadoActual);
+    }
+
+    public void pausarReanudar() {
+        if (this.estadoActual == EstadoJuego.JUGANDO) {
+            this.estadoActual = EstadoJuego.PAUSA;
+            System.out.println("LOG [ESTADO]: Juego PAUSADO.");
+        } else if (this.estadoActual == EstadoJuego.PAUSA) {
+            this.estadoActual = EstadoJuego.JUGANDO;
+            System.out.println("LOG [ESTADO]: Juego REANUDADO.");
+        }
+    }
+
+    public void forzarGameOver() {
+        this.estadoActual = EstadoJuego.GAME_OVER;
+        System.out.println("LOG [ESTADO]: Evento Forzado: ¡GAME OVER! Fin de la simulación.");
+    }
+
+    public void agregarEntidad(EntidadVideojuego entidad) {
+        this.entidades.add(entidad);
+        System.out.println("LOG [ENTIDADES]: Nueva entidad spawneda -> " + entidad.getNombre() + " en (" + entidad.getX() + "," + entidad.getY() + ")");
+    }
+
+    public void eliminarEntidad(EntidadVideojuego entidad) {
+        if (this.entidades.remove(entidad)) {
+            System.out.println("LOG [ENTIDADES]: Entidad removida del mapa -> " + entidad.getNombre());
+        }
+    }
+
+    public void desplazarEntidad(String direccion) {
+        if (this.estadoActual != EstadoJuego.JUGANDO) {
+            System.out.println("LOG [INPUT]: Movimiento ignorado. El juego no está activo.");
+            return;
+        }
+        
+        switch (direccion.toUpperCase()) {
+            case "ARRIBA":    jugador.setY(jugador.getY() - 1); break;
+            case "ABAJO":     jugador.setY(jugador.getY() + 1); break;
+            case "IZQUIERDA": jugador.setX(jugador.getX() - 1); break;
+            case "DERECHA":   jugador.setX(jugador.getX() + 1); break;
+            default:
+                System.out.println("LOG [INPUT]: Dirección táctil '" + direccion + "' no válida.");
+                return;
+        }
+        System.out.println("LOG [INPUT]: Touch deslizado [" + direccion + "]. Nueva posición de " + jugador.getNombre() + ": (" + jugador.getX() + "," + jugador.getY() + ")");
+    }
+
+    public void pulsarBotonAccion() {
+        if (this.estadoActual != EstadoJuego.JUGANDO) {
+            System.out.println("LOG [INPUT]: Acción ignorada. El juego no está activo.");
+            return;
+        }
+        System.out.println("LOG [INPUT]: ¡Botón de ACCIÓN pulsado en pantalla! (El jugador blande su espada).");
+    }
+
+    public void actualizar() {
+        if (this.estadoActual != EstadoJuego.JUGANDO) {
+            System.out.println("LOG [LOOP]: Ciclo omitido. El motor está en estado: " + estadoActual);
+            return;
+        }
+
+        System.out.println("\n--- [TOCK DEL GAME LOOP] Actualizando Entidades ---");
+        
+        List<EntidadVideojuego> copiaEntidades = new ArrayList<>(this.entidades);
+        
+        for (EntidadVideojuego entidad : copiaEntidades) {
+            entidad.actualizar(this.jugador);
+        }
+        
+        if (this.jugador.getVida() <= 0) {
+            forzarGameOver();
+        }
+    }
+
+    public EstadoJuego getEstadoActual() { return estadoActual; }
+    public List<EntidadVideojuego> getEntidades() { return entidades; }
+}
+
+2. Modificación de Main.java
+
+package com.motorjuego;
+
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("=========================================================");
+        System.out.println("DEMOSTRACIÓN: FUNCIONALIDADES MÍNIMAS OBLIGATORIAS (PARTE 3)");
+        System.out.println("=========================================================\n");
+
+        MotorJuego motor = new MotorJuego();
+
+        // ---------------------------------------------------------
+        // REQUISITO 1: Control de Estado del Juego (Menú -> Iniciar)
+        // ---------------------------------------------------------
+        System.out.println(">>> 1. Probando el control de estados del motor...");
+        motor.actualizar(); // Debería omitirse porque está en MENU
+        motor.iniciarPartida();
+        
+        // ---------------------------------------------------------
+        // REQUISITO 2: Gestión de Entidades Básica (Añadir dinámicamente)
+        // ---------------------------------------------------------
+        System.out.println("\n>>> 2. Probando la gestión dinámica de entidades...");
+        // Creamos entidades enemigas y recolectables simuladas
+        Enemigo orco = new Enemigo("Orco Guardia", 2, 4);
+        // Supongamos un objeto recolectable rápido usando una subclase anónima o mapeada
+        EntidadVideojuego moneda = new EntidadVideojuego("Moneda de Oro", 3, 2, 1, 1, 1, "oro.png") {
+            @Override
+            public void actualizar(EntidadVideojuego jugador) {}
+        };
+
+        motor.agregarEntidad(orco);
+        motor.agregarEntidad(moneda);
+
+        // Ejecutamos el ciclo del bucle de juego
+        motor.actualizar();
+
+        // ---------------------------------------------------------
+        // REQUISITO 3: Simulación de Inputs Táctiles
+        // ---------------------------------------------------------
+        System.out.println("\n>>> 3. Probando la simulación de Inputs Táctiles...");
+        motor.pulsarBotonAccion();
+        
+        // El jugador originalmente está en (2,2). Lo desplazamos a la derecha -> (3,2) para recoger la moneda
+        motor.desplazarEntidad("DERECHA");
+
+        // Simulación de recolección de entidad: Eliminamos la moneda tras el movimiento exitoso
+        System.out.println("\n>>> 4. Eliminando entidad recolectada del mapa...");
+        motor.eliminarEntidad(moneda);
+
+        // ---------------------------------------------------------
+        // REQUISITO 1 (Cont.): Pausar, Reanudar y Forzar Game Over
+        // ---------------------------------------------------------
+        System.out.println("\n>>> 5. Probando flujos alternativos de estado (Pausa/Reanudar)...");
+        motor.pausarReanudar(); // Pasa a PAUSA
+        motor.desplazarEntidad("ARRIBA"); // Intento de movimiento bloqueado por pausa
+        motor.actualizar(); // Ciclo de actualización bloqueado por pausa
+        
+        motor.pausarReanudar(); // Reanuda a JUGANDO
+        motor.actualizar(); // Vuelve a funcionar el ciclo normalmente
+
+        System.out.println("\n>>> 6. Forzando el cierre de juego por Game Over...");
+        motor.forzarGameOver();
+        motor.actualizar(); // Ciclo bloqueado por fin de partida
+
+        System.out.println("\n=========================================================");
+        System.out.println("FIN DE LA SIMULACIÓN DE REQUISITOS MÍNIMOS");
+        System.out.println("=========================================================");
+    }
+}
+
+
